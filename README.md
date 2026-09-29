@@ -1,36 +1,69 @@
-VK Маруся — SPA для поиска и избранного
-React / TypeScript приложение для поиска фильмов, просмотра деталей и управления избранным.
+# VK Marusya — Movie Discovery SPA
 
-🚀 Основной функционал
-Модуль	Описание
-Главная	Случайный фильм + топ-10 по IMDb
-Жанры	Каталог с переходом к фильмам по жанру
-Фильмы по жанру	Пагинация (5–15 фильмов), адаптивная сетка
-Страница фильма	Детали, трейлер, кнопка добавления в избранное
-Личный кабинет	Данные пользователя + список избранных фильмов
-Поиск	Мгновенный, с дебаунсом (до 5 результатов)
-Авторизация / регистрация	Валидация форм, сессия через localStorage
-🛠️ Стек технологий
-React · TypeScript · React Router · Redux Toolkit · SCSS (модули, BEM) · Axios
+A responsive React + TypeScript portfolio application for discovering TV shows, viewing details and saving favorites. The catalogue uses live data from the TVmaze API.
 
-📦 Запуск проекта
-bash
+## Features
+
+- Live catalogue from TVmaze
+- Debounced search (400 ms)
+- Show details with poster, genres, year, rating and description
+- Client-side routing with a dedicated details URL
+- Favorites managed with Redux Toolkit
+- Favorites persisted in localStorage
+- Loading and API error states
+- Responsive desktop/mobile layout
+- 404 route
+
+## Tech stack
+
+React 19 · TypeScript · Redux Toolkit · React Redux · React Router · Axios · CSS
+
+## Architecture
+
+```text
+src/
+├── api/          # TVmaze API client and types
+├── components/   # Reusable UI components
+├── data/         # Local demo data kept for reference
+├── pages/        # Catalogue and details pages
+├── store/        # Redux store and favorites slice
+├── types/        # Shared TypeScript models
+├── App.tsx       # Layout and routing
+└── index.tsx     # Providers and application entry point
+```
+
+## Routes
+
+- `/` — catalogue and search
+- `/movie/:id` — show details
+
+## Run locally
+
+```bash
 npm install
 npm start
-📂 Структура проекта
-text
-src/
-├── api/          # Запросы к серверу
-├── components/   # UI-компоненты и модальные окна
-├── pages/        # Страницы приложения
-├── store/        # Redux (слайсы, хранилище)
-├── styles/       # SCSS (глобальные стили, переменные)
-└── App.tsx       # Роутинг и точка входа
-👤 Контактная информация
-Александр Коломиец
+```
 
-Email: Kolomiets94@yandex.ru
+Create React App starts the development server at `http://localhost:3000`.
 
-Telegram: @Kolomiets94
+For a production build:
 
-GitHub: github.com/Kolomiets94
+```bash
+npm run build
+```
+
+## Data source
+
+Show information and artwork are provided by [TVmaze](https://www.tvmaze.com). TVmaze API data is licensed under CC BY-SA.
+
+## Project status
+
+This is a portfolio project. Favorites are intentionally stored on the client in localStorage; no user account or custom backend is required.
+
+## Author
+
+**Alexander Kolomiets** — Junior Frontend Developer (React / TypeScript)
+
+- GitHub: https://github.com/Kolomiets94
+- Email: Kolomiets94@yandex.ru
+- Telegram: @Kolomiets94
