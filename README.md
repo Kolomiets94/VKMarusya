@@ -1,5 +1,7 @@
 # VK Marusya — Movie Discovery SPA
 
+**Live demo:** https://kolomiets94.github.io/VKMarusya/
+
 A responsive React + TypeScript portfolio application for discovering TV shows, viewing details and saving favorites. The catalogue uses live data from the TVmaze API.
 
 ## Features
@@ -18,20 +20,6 @@ A responsive React + TypeScript portfolio application for discovering TV shows, 
 
 React 19 · TypeScript · Redux Toolkit · React Redux · React Router · Axios · CSS
 
-## Architecture
-
-```text
-src/
-├── api/          # TVmaze API client and types
-├── components/   # Reusable UI components
-├── data/         # Local demo data kept for reference
-├── pages/        # Catalogue and details pages
-├── store/        # Redux store and favorites slice
-├── types/        # Shared TypeScript models
-├── App.tsx       # Layout and routing
-└── index.tsx     # Providers and application entry point
-```
-
 ## Routes
 
 - `/` — catalogue and search
@@ -44,8 +32,6 @@ npm install
 npm start
 ```
 
-Create React App starts the development server at `http://localhost:3000`.
-
 For a production build:
 
 ```bash
@@ -55,10 +41,6 @@ npm run build
 ## Data source
 
 Show information and artwork are provided by [TVmaze](https://www.tvmaze.com). TVmaze API data is licensed under CC BY-SA.
-
-## Project status
-
-This is a portfolio project. Favorites are intentionally stored on the client in localStorage; no user account or custom backend is required.
 
 ## Author
 
