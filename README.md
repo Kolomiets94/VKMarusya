@@ -2,11 +2,11 @@
 
 **Live demo:** https://kolomiets94.github.io/VKMarusya/
 
-A responsive React + TypeScript portfolio application for discovering TV shows, viewing details and saving favorites. The catalogue uses live data from the TVmaze API.
+A responsive React + TypeScript portfolio application for browsing a local editorial selection of eight Russian films, viewing details and saving favorites. Detail pages for IDs outside the local selection request data from TVmaze.
 
 ## Features
 
-- Live catalogue from TVmaze
+- Local catalogue of eight Russian films
 - Debounced search (400 ms)
 - Show details with poster, genres, year, rating and description
 - Client-side routing with a dedicated details URL
@@ -28,7 +28,7 @@ React 19 · TypeScript · Redux Toolkit · React Redux · React Router · Axios 
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm start
 ```
 
@@ -40,7 +40,7 @@ npm run build
 
 ## Data source
 
-Show information and artwork are provided by [TVmaze](https://www.tvmaze.com). TVmaze API data is licensed under CC BY-SA.
+The catalogue and search use the `russianFilms` array in `src/api/shows.ts` (IDs 1000001–1000008), with editorial descriptions. `getShow(id)` returns local films for these IDs and otherwise requests `https://api.tvmaze.com/shows/{id}`. The catalogue does not fetch live TVmaze data. External show data and artwork come from [TVmaze](https://www.tvmaze.com).
 
 ## Author
 
