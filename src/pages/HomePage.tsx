@@ -102,18 +102,20 @@ export const HomePage = () => {
                   className="poster"
                   to={`/movie/${show.id}`}
                   aria-label={`Details for ${show.name}`}
-                  style={
-                    show.image
-                      ? {
-                          backgroundImage: `url(${show.image.medium})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }
-                      : undefined
-                  }
                 >
+                  {show.image && (
+                    <img
+                      className="posterImage"
+                      src={show.image.medium}
+                      alt={`Постер: ${show.name}`}
+                      onError={(event) => {
+                        event.currentTarget.style.display = 'none';
+                        event.currentTarget.parentElement?.classList.add('posterFallback');
+                      }}
+                    />
+                  )}
+                  <strong aria-hidden="true">{show.name[0]}</strong>
                   <span>{show.rating.average ?? '—'}</span>
-                  {!show.image && <strong aria-hidden="true">{show.name[0]}</strong>}
                 </Link>
                 <div className="cardBody">
                   <div>
