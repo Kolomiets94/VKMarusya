@@ -11,6 +11,8 @@ export interface Show {
 }
 
 const client = axios.create({ baseURL: 'https://api.tvmaze.com' });
+const tmdbClient = axios.create({ baseURL: 'https://api.themoviedb.org/3' });
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 const films: Array<[string, string, string, string]> = [
   ['Брат', '1997', 'Драма', 'Данила Багров приезжает в Санкт-Петербург к старшему брату и оказывается втянут в криминальный мир.'],
@@ -23,39 +25,68 @@ const films: Array<[string, string, string, string]> = [
   ['Последний богатырь', '2017', 'Фэнтези', 'Москвич Иван оказывается в сказочном Белогорье и становится участником борьбы сказочных героев.'],
 ];
 
-const posterPaths = [
-  'brat.svg', 'brat-2.svg', 'legend-17.svg', 'dvizhenie-vverh.svg',
-  'kholop.svg', 'cheburashka.svg', 'major-grom.svg', 'last-bogatyr.svg',
-];
-
-export const russianFilms: Show[] = films.map(([name, year, genre, summary], index) => ({
+const localShows: Show[] = films.map(([name, year, genre, summary], index) => ({
   id: 1000001 + index,
   name,
   premiered: year + '-01-01',
   genres: [genre],
   summary,
   rating: { average: null },
-  image: {
-    medium: `${process.env.PUBLIC_URL || '.'}/posters/${posterPaths[index]}`,
-    original: `${process.env.PUBLIC_URL || '.'}/posters/${posterPaths[index]}`,
-  },
+  image: null,
 }));
 
+const tmdbApiKey = process.env.REACT_APP_TMDB_API_KEY;
+
+const withRealPoster = async (show: Show): Promise<Show> => {
+  if (!tmdbApiKey) return show;
+
+  try {
+    const { data } = await tmdbClient.get('/search/movie', {
+      params: {
+        api_key: tmdbApiKey,
+        query: show.name,
+        year: show.premiered?.slice(0, 4),
+        language: 'ru-RU',
+        include_adult: false,
+      },
+    });
+    const results: Array<{ title: string; release_date?: string; poster_path: string | null }> =
+      data.results ?? [];
+    const year = show.premiered?.slice(0, 4);
+    const match =
+      results.find((movie) => movie.title.toLocaleLowerCase('ru') === show.name.toLocaleLowerCase('ru')
+        && movie.release_date?.slice(0, 4) === year)
+      ?? results.find((movie) => movie.release_date?.slice(0, 4) === year)
+      ?? results[0];
+    if (!match?.poster_path) return show;
+
+    const poster = `${TMDB_IMAGE_BASE}/w500${match.poster_path}`;
+    return { ...show, image: { medium: poster, original: `${TMDB_IMAGE_BASE}/original${match.poster_path}` } };
+  } catch {
+    // Keep the catalogue usable if TMDB is unavailable or not configured.
+    return show;
+  }
+};
+
+const withPosters = async (shows: Show[]): Promise<Show[]> =>
+  Promise.all(shows.map(withRealPoster));
+
 export const isLocalFilm = (id: number): boolean =>
-  russianFilms.some((film) => film.id === id);
+  localShows.some((film) => film.id === id);
 
 export const searchShows = async (query: string): Promise<Show[]> => {
   const normalizedQuery = query.trim().toLocaleLowerCase('ru');
-  return russianFilms.filter((film) =>
+  const matches = localShows.filter((film) =>
     film.name.toLocaleLowerCase('ru').includes(normalizedQuery),
   );
+  return withPosters(matches);
 };
 
-export const getShows = async (): Promise<Show[]> => russianFilms;
+export const getShows = async (): Promise<Show[]> => withPosters(localShows);
 
 export const getShow = async (id: number): Promise<Show> => {
-  const film = russianFilms.find((item) => item.id === id);
-  if (film) return film;
+  const film = localShows.find((item) => item.id === id);
+  if (film) return (await withPosters([film]))[0];
 
   const { data } = await client.get<Show>(`/shows/${id}`);
   return data;
