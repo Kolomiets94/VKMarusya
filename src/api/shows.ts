@@ -42,7 +42,7 @@ export const russianFilms: Show[] = films.map(([name, year, genre, summary], ind
   summary,
   rating: { average: null },
   image: {
-    medium: `${process.env.PUBLIC_URL}/posters/${posterPaths[index]}`,
+    medium: `${process.env.PUBLIC_URL || '.'}/posters/${posterPaths[index]}`,
     original: `${process.env.PUBLIC_URL}/posters/${posterPaths[index]}`,
   },
 }));
