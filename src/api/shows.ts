@@ -11,7 +11,7 @@ export interface Show {
 }
 
 const client = axios.create({ baseURL: 'https://api.tvmaze.com' });
-const tmdbClient = axios.create({ baseURL: 'https://api.themoviedb.org/3' });
+const tmdbClient = axios.create({ baseURL: 'https://vkmarusya-tmdb-proxy.ekaterinsburg96.workers.dev' });
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 const films: Array<[string, string, string, string]> = [
@@ -35,15 +35,10 @@ const localShows: Show[] = films.map(([name, year, genre, summary], index) => ({
   image: null,
 }));
 
-const tmdbApiKey = process.env.REACT_APP_TMDB_API_KEY;
-
 const withRealPoster = async (show: Show): Promise<Show> => {
-  if (!tmdbApiKey) return show;
-
   try {
     const { data } = await tmdbClient.get('/search/movie', {
       params: {
-        api_key: tmdbApiKey,
         query: show.name,
         year: show.premiered?.slice(0, 4),
         language: 'ru-RU',
