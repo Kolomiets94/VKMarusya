@@ -5,7 +5,13 @@ import App from './App';
 import { store } from './store';
 
 test('renders movie catalogue shell', () => {
-  render(<Provider store={store}><MemoryRouter><App /></MemoryRouter></Provider>);
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>
+    </Provider>,
+  );
   expect(screen.getByText(/Российские фильмы/i)).toBeInTheDocument();
-  expect(screen.getByRole('textbox', { name: /search shows/i })).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: /поиск фильмов/i })).toBeInTheDocument();
 });
