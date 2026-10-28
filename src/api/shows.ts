@@ -13,15 +13,16 @@ export interface Show {
 const client = axios.create({ baseURL: 'https://api.tvmaze.com' });
 const wikipediaClient = axios.create({ baseURL: 'https://ru.wikipedia.org/w/api.php' });
 
-const films: Array<[string, string, string, string]> = [
-  ['Брат', '1997', 'Драма', 'Данила Багров приезжает в Санкт-Петербург к старшему брату и оказывается втянут в криминальный мир.'],
-  ['Брат 2', '2000', 'Боевик', 'Данила Багров отправляется в США, чтобы помочь брату погибшего друга.'],
-  ['Легенда №17', '2013', 'Спорт', 'История становления хоккеиста Валерия Харламова и его пути к знаменитому матчу сборной СССР против Канады.'],
-  ['Движение вверх', '2017', 'Спорт', 'Спортивная драма о сборной СССР по баскетболу и финале Олимпийских игр 1972 года.'],
-  ['Холоп', '2019', 'Комедия', 'Избалованный молодой человек попадает в постановочный мир, где его убеждают, что он оказался в деревне XIX века.'],
-  ['Чебурашка', '2023', 'Семейный', 'Необычный пушистый герой оказывается в приморском городе и меняет жизнь садовника Геннадия.'],
-  ['Майор Гром: Чумной Доктор', '2021', 'Боевик', 'Петербургский полицейский Игорь Гром расследует преступления таинственного Чумного Доктора.'],
-  ['Последний богатырь', '2017', 'Фэнтези', 'Москвич Иван оказывается в сказочном Белогорье и становится участником борьбы сказочных героев.'],
+// Use the known article title first; search is only a fallback.
+const films: Array<[string, string, string, string, string]> = [
+  ['Брат', '1997', 'Драма', 'Данила Багров приезжает в Санкт-Петербург к старшему брату и оказывается втянут в криминальный мир.', 'Брат (фильм)'],
+  ['Брат 2', '2000', 'Боевик', 'Данила Багров отправляется в США, чтобы помочь брату погибшего друга.', 'Брат 2'],
+  ['Легенда №17', '2013', 'Спорт', 'История становления хоккеиста Валерия Харламова и его пути к знаменитому матчу сборной СССР против Канады.', 'Легенда № 17'],
+  ['Движение вверх', '2017', 'Спорт', 'Спортивная драма о сборной СССР по баскетболу и финале Олимпийских игр 1972 года.', 'Движение вверх (фильм)'],
+  ['Холоп', '2019', 'Комедия', 'Избалованный молодой человек попадает в постановочный мир, где его убеждают, что он оказался в деревне XIX века.', 'Холоп (фильм)'],
+  ['Чебурашка', '2023', 'Семейный', 'Необычный пушистый герой оказывается в приморском городе и меняет жизнь садовника Геннадия.', 'Чебурашка (фильм, 2022)'],
+  ['Майор Гром: Чумной Доктор', '2021', 'Боевик', 'Петербургский полицейский Игорь Гром расследует преступления таинственного Чумного Доктора.', 'Майор Гром: Чумной Доктор'],
+  ['Последний богатырь', '2017', 'Фэнтези', 'Москвич Иван оказывается в сказочном Белогорье и становится участником борьбы сказочных героев.', 'Последний богатырь'],
 ];
 
 const localShows: Show[] = films.map(([name, year, genre, summary], index) => ({
@@ -40,32 +41,57 @@ type WikipediaPage = {
   original?: { source: string };
 };
 
+const imageFromPages = (pages: WikipediaPage[]): Show['image'] => {
+  const page = pages.find((item) => item.thumbnail?.source || item.original?.source);
+  const source = page?.thumbnail?.source ?? page?.original?.source;
+  return source ? { medium: source, original: page?.original?.source ?? source } : null;
+};
+
 const withRealPoster = async (show: Show): Promise<Show> => {
+  const film = films.find(([name]) => name === show.name);
+  if (!film) return show;
+
   try {
-    const year = show.premiered?.slice(0, 4) ?? '';
-    const { data } = await wikipediaClient.get('', {
+    const exact = await wikipediaClient.get('', {
       params: {
         action: 'query',
-        generator: 'search',
-        gsrsearch: `${show.name} фильм ${year}`,
-        gsrlimit: 6,
+        titles: film[4],
         prop: 'pageimages',
         piprop: 'thumbnail|original',
-        pithumbsize: 500,
+        pithumbsize: 600,
         format: 'json',
         origin: '*',
       },
     });
-    const pages = Object.values((data.query?.pages ?? {}) as Record<string, WikipediaPage>);
-    const normalize = (value: string) => value.toLocaleLowerCase('ru').replace(/[^\p{L}\p{N}]+/gu, '');
-    const match = pages.find((page) => normalize(page.title).includes(normalize(show.name)))
-      ?? pages.find((page) => page.thumbnail?.source || page.original?.source);
-    const poster = match?.original?.source ?? match?.thumbnail?.source;
-    if (!poster) return show;
+    let image = imageFromPages(Object.values((exact.data.query?.pages ?? {}) as Record<string, WikipediaPage>));
 
-    return { ...show, image: { medium: match?.thumbnail?.source ?? poster, original: poster } };
+    if (!image) {
+      const search = await wikipediaClient.get('', {
+        params: {
+          action: 'query',
+          generator: 'search',
+          gsrsearch: `${show.name} фильм ${film[1]}`,
+          gsrlimit: 8,
+          prop: 'pageimages',
+          piprop: 'thumbnail|original',
+          pithumbsize: 600,
+          format: 'json',
+          origin: '*',
+        },
+      });
+      const pages = Object.values((search.data.query?.pages ?? {}) as Record<string, WikipediaPage>);
+      const normalizedName = show.name.toLocaleLowerCase('ru').replace(/[^\p{L}\p{N}]+/gu, '');
+      const match = pages.find((page) =>
+        page.title.toLocaleLowerCase('ru').replace(/[^\p{L}\p{N}]+/gu, '').includes(normalizedName),
+      );
+      image = match
+        ? imageFromPages([match])
+        : imageFromPages(pages);
+    }
+
+    return image ? { ...show, image } : show;
   } catch {
-    // Keep the catalogue usable if Wikipedia is unavailable or has no matching image.
+    // Keep the catalogue usable if Wikipedia is unavailable or has no image.
     return show;
   }
 };

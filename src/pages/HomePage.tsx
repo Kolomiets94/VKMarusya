@@ -99,7 +99,7 @@ export const HomePage = () => {
             visibleShows.map((show) => (
               <article className="card" key={show.id}>
                 <Link
-                  className="poster"
+                  className={show.image ? "poster" : "poster posterFallback"}
                   to={`/movie/${show.id}`}
                   aria-label={`Details for ${show.name}`}
                 >
