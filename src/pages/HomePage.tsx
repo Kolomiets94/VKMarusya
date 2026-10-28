@@ -51,13 +51,14 @@ export const HomePage = () => {
         <p>Выбирай фильм, ищи по названию и сохраняй в избранное.</p>
         <div className="controls">
           <input
-            aria-label="Search shows"
+            aria-label="Поиск фильмов"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Найти фильм..."
           />
           <button
             className={favoritesOnly ? 'primary' : ''}
+            aria-pressed={favoritesOnly}
             onClick={() => setFavoritesOnly((value) => !value)}
           >
             {favoritesOnly ? 'Все фильмы' : 'Избранное'}
@@ -71,7 +72,7 @@ export const HomePage = () => {
           <span>{visibleShows.length} фильмов</span>
         </div>
 
-        {loading && <p>Loading…</p>}
+        {loading && <p role="status">Loading…</p>}
 
         {error && (
           <div role="alert">
@@ -100,6 +101,7 @@ export const HomePage = () => {
                 <Link
                   className="poster"
                   to={`/movie/${show.id}`}
+                  aria-label={`Details for ${show.name}`}
                   style={
                     show.image
                       ? {
@@ -111,7 +113,7 @@ export const HomePage = () => {
                   }
                 >
                   <span>{show.rating.average ?? '—'}</span>
-                  {!show.image && <strong>{show.name[0]}</strong>}
+                  {!show.image && <strong aria-hidden="true">{show.name[0]}</strong>}
                 </Link>
                 <div className="cardBody">
                   <div>
@@ -123,7 +125,8 @@ export const HomePage = () => {
                     </p>
                   </div>
                   <button
-                    aria-label="Toggle favorite"
+                    aria-label={favorites.includes(show.id) ? `Remove ${show.name} from favorites` : `Add ${show.name} to favorites`}
+                    aria-pressed={favorites.includes(show.id)}
                     onClick={() => dispatch(toggleFavorite(show.id))}
                   >
                     {favorites.includes(show.id) ? '♥' : '♡'}
