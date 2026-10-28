@@ -11,8 +11,7 @@ export interface Show {
 }
 
 const client = axios.create({ baseURL: 'https://api.tvmaze.com' });
-const tmdbClient = axios.create({ baseURL: 'https://vkmarusya-tmdb-proxy.ekaterinsburg96.workers.dev' });
-const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+const wikipediaClient = axios.create({ baseURL: 'https://ru.wikipedia.org/w/api.php' });
 
 const films: Array<[string, string, string, string]> = [
   ['Брат', '1997', 'Драма', 'Данила Багров приезжает в Санкт-Петербург к старшему брату и оказывается втянут в криминальный мир.'],
@@ -35,30 +34,38 @@ const localShows: Show[] = films.map(([name, year, genre, summary], index) => ({
   image: null,
 }));
 
+type WikipediaPage = {
+  title: string;
+  thumbnail?: { source: string };
+  original?: { source: string };
+};
+
 const withRealPoster = async (show: Show): Promise<Show> => {
   try {
-    const { data } = await tmdbClient.get('/search/movie', {
+    const year = show.premiered?.slice(0, 4) ?? '';
+    const { data } = await wikipediaClient.get('', {
       params: {
-        query: show.name,
-        year: show.premiered?.slice(0, 4),
-        language: 'ru-RU',
-        include_adult: false,
+        action: 'query',
+        generator: 'search',
+        gsrsearch: `${show.name} фильм ${year}`,
+        gsrlimit: 6,
+        prop: 'pageimages',
+        piprop: 'thumbnail|original',
+        pithumbsize: 500,
+        format: 'json',
+        origin: '*',
       },
     });
-    const results: Array<{ title: string; release_date?: string; poster_path: string | null }> =
-      data.results ?? [];
-    const year = show.premiered?.slice(0, 4);
-    const match =
-      results.find((movie) => movie.title.toLocaleLowerCase('ru') === show.name.toLocaleLowerCase('ru')
-        && movie.release_date?.slice(0, 4) === year)
-      ?? results.find((movie) => movie.release_date?.slice(0, 4) === year)
-      ?? results[0];
-    if (!match?.poster_path) return show;
+    const pages = Object.values((data.query?.pages ?? {}) as Record<string, WikipediaPage>);
+    const normalize = (value: string) => value.toLocaleLowerCase('ru').replace(/[^\p{L}\p{N}]+/gu, '');
+    const match = pages.find((page) => normalize(page.title).includes(normalize(show.name)))
+      ?? pages.find((page) => page.thumbnail?.source || page.original?.source);
+    const poster = match?.original?.source ?? match?.thumbnail?.source;
+    if (!poster) return show;
 
-    const poster = `${TMDB_IMAGE_BASE}/w500${match.poster_path}`;
-    return { ...show, image: { medium: poster, original: `${TMDB_IMAGE_BASE}/original${match.poster_path}` } };
+    return { ...show, image: { medium: match?.thumbnail?.source ?? poster, original: poster } };
   } catch {
-    // Keep the catalogue usable if TMDB is unavailable or not configured.
+    // Keep the catalogue usable if Wikipedia is unavailable or has no matching image.
     return show;
   }
 };
