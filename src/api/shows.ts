@@ -11,6 +11,7 @@ export interface Show {
 }
 
 const client = axios.create({ baseURL: 'https://api.tvmaze.com' });
+const wikipediaClient = axios.create({ baseURL: 'https://ru.wikipedia.org/w/api.php' });
 
 const films: Array<[string, string, string, string]> = [
   ['Брат', '1997', 'Драма', 'Данила Багров приезжает в Санкт-Петербург к старшему брату и оказывается втянут в криминальный мир.'],
@@ -23,39 +24,71 @@ const films: Array<[string, string, string, string]> = [
   ['Последний богатырь', '2017', 'Фэнтези', 'Москвич Иван оказывается в сказочном Белогорье и становится участником борьбы сказочных героев.'],
 ];
 
-const posterPaths = [
-  'brat.svg', 'brat-2.svg', 'legend-17.svg', 'dvizhenie-vverh.svg',
-  'kholop.svg', 'cheburashka.svg', 'major-grom.svg', 'last-bogatyr.svg',
-];
-
-export const russianFilms: Show[] = films.map(([name, year, genre, summary], index) => ({
+const localShows: Show[] = films.map(([name, year, genre, summary], index) => ({
   id: 1000001 + index,
   name,
   premiered: year + '-01-01',
   genres: [genre],
   summary,
   rating: { average: null },
-  image: {
-    medium: `${process.env.PUBLIC_URL || '.'}/posters/${posterPaths[index]}`,
-    original: `${process.env.PUBLIC_URL || '.'}/posters/${posterPaths[index]}`,
-  },
+  image: null,
 }));
 
+type WikipediaPage = {
+  title: string;
+  thumbnail?: { source: string };
+  original?: { source: string };
+};
+
+const withRealPoster = async (show: Show): Promise<Show> => {
+  try {
+    const year = show.premiered?.slice(0, 4) ?? '';
+    const { data } = await wikipediaClient.get('', {
+      params: {
+        action: 'query',
+        generator: 'search',
+        gsrsearch: `${show.name} фильм ${year}`,
+        gsrlimit: 6,
+        prop: 'pageimages',
+        piprop: 'thumbnail|original',
+        pithumbsize: 500,
+        format: 'json',
+        origin: '*',
+      },
+    });
+    const pages = Object.values((data.query?.pages ?? {}) as Record<string, WikipediaPage>);
+    const normalize = (value: string) => value.toLocaleLowerCase('ru').replace(/[^\p{L}\p{N}]+/gu, '');
+    const match = pages.find((page) => normalize(page.title).includes(normalize(show.name)))
+      ?? pages.find((page) => page.thumbnail?.source || page.original?.source);
+    const poster = match?.original?.source ?? match?.thumbnail?.source;
+    if (!poster) return show;
+
+    return { ...show, image: { medium: match?.thumbnail?.source ?? poster, original: poster } };
+  } catch {
+    // Keep the catalogue usable if Wikipedia is unavailable or has no matching image.
+    return show;
+  }
+};
+
+const withPosters = async (shows: Show[]): Promise<Show[]> =>
+  Promise.all(shows.map(withRealPoster));
+
 export const isLocalFilm = (id: number): boolean =>
-  russianFilms.some((film) => film.id === id);
+  localShows.some((film) => film.id === id);
 
 export const searchShows = async (query: string): Promise<Show[]> => {
   const normalizedQuery = query.trim().toLocaleLowerCase('ru');
-  return russianFilms.filter((film) =>
+  const matches = localShows.filter((film) =>
     film.name.toLocaleLowerCase('ru').includes(normalizedQuery),
   );
+  return withPosters(matches);
 };
 
-export const getShows = async (): Promise<Show[]> => russianFilms;
+export const getShows = async (): Promise<Show[]> => withPosters(localShows);
 
 export const getShow = async (id: number): Promise<Show> => {
-  const film = russianFilms.find((item) => item.id === id);
-  if (film) return film;
+  const film = localShows.find((item) => item.id === id);
+  if (film) return (await withPosters([film]))[0];
 
   const { data } = await client.get<Show>(`/shows/${id}`);
   return data;

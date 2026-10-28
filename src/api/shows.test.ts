@@ -1,12 +1,11 @@
 import { getShow, getShows, isLocalFilm, searchShows } from './shows';
 
 describe('local film catalogue', () => {
-  test('returns the local catalogue without external requests', async () => {
+  test('returns the local catalogue without requiring an external API key', async () => {
     const shows = await getShows();
     expect(shows).toHaveLength(8);
     expect(shows[0].name).toBe('Брат');
-    expect(shows.every((show) => show.image?.medium.endsWith('.svg'))).toBe(true);
-    expect(shows.every((show) => show.image?.original === show.image?.medium)).toBe(true);
+    expect(shows.every((show) => show.id >= 1000001 && show.id <= 1000008)).toBe(true);
   });
 
   test('searches film titles without case sensitivity or surrounding spaces', async () => {

@@ -2,14 +2,15 @@
 
 **[Live demo](https://kolomiets94.github.io/VKMarusya/)**
 
-A responsive React + TypeScript portfolio application for browsing a local editorial selection of eight Russian films, viewing details and saving favorites.
+A responsive React + TypeScript portfolio application for browsing a curated selection of eight Russian films, viewing details and saving favorites.
 
 ## Features
 
-- Local catalogue of eight Russian films
+- Curated catalogue of eight Russian films
+- Poster thumbnails discovered through the public Russian Wikipedia API — no API key or secret required
+- Graceful poster fallback when an image is unavailable
 - Debounced title search
-- Film details and fallback artwork when a poster is unavailable
-- Favorites managed with Redux Toolkit and persisted in localStorage
+- Film details and favorites persisted in localStorage
 - Loading, empty-result and error states
 - Protection against stale asynchronous responses
 - Responsive layout and a not-found route
@@ -35,6 +36,8 @@ npm ci
 npm start
 ```
 
+No API key or environment file is needed for poster lookup. The app asks the public Russian Wikipedia API for matching article thumbnails and continues to work if the API is unavailable or no suitable image exists.
+
 Run tests:
 
 ```bash
@@ -49,7 +52,7 @@ npm run build
 
 ## Data
 
-The catalogue and search use the `russianFilms` array in `src/api/shows.ts` (IDs 1000001–1000008), with editorial descriptions. `getShow(id)` also supports fetching a TVmaze show by ID, but externally fetched shows are not added to the local favorites list. See [TVmaze API](https://www.tvmaze.com/api). This project is a discovery catalogue and does not stream films.
+The catalogue and search use the `films` list in `src/api/shows.ts` (IDs 1000001–1000008), with editorial descriptions. Poster thumbnails are discovered via the public Russian Wikipedia API; availability and image quality depend on the matching article. Wikipedia article content and images are subject to their respective licenses. `getShow(id)` also supports fetching a TVmaze show by ID. This project is a discovery catalogue and does not stream films.
 
 ## Author
 
