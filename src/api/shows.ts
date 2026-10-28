@@ -23,6 +23,11 @@ const films: Array<[string, string, string, string]> = [
   ['Последний богатырь', '2017', 'Фэнтези', 'Москвич Иван оказывается в сказочном Белогорье и становится участником борьбы сказочных героев.'],
 ];
 
+const posterPaths = [
+  'brat.svg', 'brat-2.svg', 'legend-17.svg', 'dvizhenie-vverh.svg',
+  'kholop.svg', 'cheburashka.svg', 'major-grom.svg', 'last-bogatyr.svg',
+];
+
 export const russianFilms: Show[] = films.map(([name, year, genre, summary], index) => ({
   id: 1000001 + index,
   name,
@@ -30,7 +35,10 @@ export const russianFilms: Show[] = films.map(([name, year, genre, summary], ind
   genres: [genre],
   summary,
   rating: { average: null },
-  image: null,
+  image: {
+    medium: `${process.env.PUBLIC_URL || '.'}/posters/${posterPaths[index]}`,
+    original: `${process.env.PUBLIC_URL || '.'}/posters/${posterPaths[index]}`,
+  },
 }));
 
 export const isLocalFilm = (id: number): boolean =>
