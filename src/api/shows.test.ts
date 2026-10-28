@@ -5,6 +5,8 @@ describe('local film catalogue', () => {
     const shows = await getShows();
     expect(shows).toHaveLength(8);
     expect(shows[0].name).toBe('Брат');
+    expect(shows.every((show) => show.image?.medium.endsWith('.svg'))).toBe(true);
+    expect(shows.every((show) => show.image?.original === show.image?.medium)).toBe(true);
   });
 
   test('searches film titles without case sensitivity or surrounding spaces', async () => {
