@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getShow, Show } from '../api/shows';
+import { getShow, isLocalFilm, Show } from '../api/shows';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { toggleFavorite } from '../store/favoritesSlice';
@@ -44,7 +44,7 @@ export const MoviePage = () => {
     };
   }, [showId]);
 
-  if (loading) return <main><p>Loading…</p></main>;
+  if (loading) return <main><p role="status">Loading…</p></main>;
 
   if (error) {
     return (
@@ -71,19 +71,22 @@ export const MoviePage = () => {
       <Link to="/">← К каталогу</Link>
       <section className="detail">
         {show.image && (
-          <img className="detailPoster" src={show.image.medium} alt={show.name} />
+          <img className="detailPoster" src={show.image.medium} alt={`Poster: ${show.name}`} />
         )}
         <div>
           <span className="pill">{show.genres.join(' · ') || 'Show'}</span>
           <h1>{show.name}</h1>
           <p>{show.premiered?.slice(0, 4) || '—'} · Рейтинг {show.rating.average ?? '—'}</p>
           <p>{summary}</p>
-          <button
-            className="primary"
-            onClick={() => dispatch(toggleFavorite(show.id))}
-          >
-            {favorites.includes(show.id) ? 'Убрать из избранного' : 'В избранное'}
-          </button>
+          {isLocalFilm(show.id) && (
+            <button
+              className="primary"
+              aria-pressed={favorites.includes(show.id)}
+              onClick={() => dispatch(toggleFavorite(show.id))}
+            >
+              {favorites.includes(show.id) ? 'Убрать из избранного' : 'В избранное'}
+            </button>
+          )}
         </div>
       </section>
       <p className="source">
