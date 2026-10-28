@@ -71,7 +71,14 @@ export const MoviePage = () => {
       <Link to="/">← К каталогу</Link>
       <section className="detail">
         {show.image && (
-          <img className="detailPoster" src={show.image.medium} alt={`Poster: ${show.name}`} />
+          <img
+            className="detailPoster"
+            src={show.image.medium}
+            alt={`Постер: ${show.name}`}
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
+          />
         )}
         <div>
           <span className="pill">{show.genres.join(' · ') || 'Show'}</span>
